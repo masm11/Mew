@@ -300,11 +300,14 @@
     (delete-file file)))
 
 (defun mew-passwd-get-cache-id (file)
-  (with-temp-buffer
-    (call-process mew-prog-passwd nil t nil "--list-packets" file)
-    (goto-char (point-min))
-    (when (re-search-forward "salt \\([^ ,]+\\)," nil t)
-      (concat "S" (match-string 1)))))
+  (let* ((args `("--list-packets" ,file)))
+    (when mew-passwd-agent-hack
+      (setq args `("--pinentry-mode" "loopback" . ,args)))
+    (with-temp-buffer
+      (apply 'call-process mew-prog-passwd nil t nil args)
+      (goto-char (point-min))
+      (when (re-search-forward "salt \\([^ ,]+\\)," nil t)
+	(concat "S" (match-string 1))))))
 
 (defun mew-passwd-clear-passphrase (file)
   (when (file-exists-p file)
